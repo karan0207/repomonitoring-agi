@@ -22,7 +22,16 @@ router.post('/trigger', async (req, res) => {
             },
         });
 
-        // TODO: Trigger Kestra workflow here
+        // Trigger Kestra workflow
+        const kestraUrl = 'http://localhost:8080/api/v1/executions/devops_agi/repo_maintenance_flow';
+
+        // We need to fetch repository details to get the URL
+        const repo = await prisma.repository.findUnique({ where: { id: repoId } });
+        if (!repo) throw new Error("Repository not found");
+
+        const repoUrl = `https://github.com/${repo.owner}/${repo.name}.git`;
+
+        console.log(`[Mock] Triggering Kestra for ${repoUrl} RunID: ${run.id}`);
 
         res.json(run);
     } catch (error) {

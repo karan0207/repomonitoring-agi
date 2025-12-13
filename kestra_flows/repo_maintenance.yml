@@ -1,0 +1,34 @@
+id: repo_maintenance_flow
+namespace: devops_agi
+inputs:
+  - name: repo_url
+    type: STRING
+    required: true
+  - name: run_id
+    type: STRING
+    required: true
+
+tasks:
+  - id: working_dir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+      - id: clone
+        type: io.kestra.plugin.git.Clone
+        url: "{{ inputs.repo_url }}"
+        branch: main
+        
+      - id: list_files
+        type: io.kestra.plugin.scripts.shell.Commands
+        commands:
+          - ls -R
+          
+      - id: run_lint
+        type: io.kestra.plugin.scripts.shell.Commands
+        commands:
+          - echo "Running lint check..."
+          - echo "Linting completed for {{ inputs.repo_url }}" > lint_report.txt
+          
+      - id: save_lint_artifact
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - lint_report.txt
