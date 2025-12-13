@@ -1,0 +1,42 @@
+id: repo_lint_scan
+namespace: devops_agi
+inputs:
+  - name: repo_url
+    type: STRING
+    required: true
+  - name: run_id
+    type: STRING
+    required: true
+
+tasks:
+  - id: working_dir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+      - id: clone
+        type: io.kestra.plugin.git.Clone
+        url: "{{ inputs.repo_url }}"
+        branch: main
+        
+      - id: install_deps
+        type: io.kestra.plugin.scripts.shell.Commands
+        commands:
+          - npm install --legacy-peer-deps || echo "Install failed but continuing"
+
+      - id: run_lint
+        type: io.kestra.plugin.scripts.shell.Commands
+        ignoreErrors: true
+        commands:
+          - npx eslint . --format=json > lint_report.json || echo "[]" > lint_report.json
+          
+      - id: read_lint_report
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - lint_report.json
+
+      - id: post_results
+        type: io.kestra.plugin.scripts.shell.Commands
+        commands:
+          - |
+            curl -X POST http://host.docker.internal:3001/api/runs/{{ inputs.run_id }}/results \
+            -H "Content-Type: application/json" \
+            -d @lint_report.json

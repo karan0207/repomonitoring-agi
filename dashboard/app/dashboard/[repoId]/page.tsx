@@ -18,17 +18,18 @@ export default function RepoDashboard() {
   const [repo, setRepo] = useState<Repo | null>(null);
 
   useEffect(() => {
-    // In a real app, fetch from backend using repoId
-    // For MVP demo, mocking the data or simpler fetch
-    console.log("Fetching details for", repoId);
-    // Mock data for immediate "Wow" factor
-    setRepo({
-        id: repoId as string,
-        owner: "karan0207",
-        name: "repomonitoring-agi",
-        defaultBranch: "main",
-        status: "active"
-    });
+    const fetchRepo = async () => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/repo/${repoId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setRepo(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch repo", error);
+        }
+    };
+    if (repoId) fetchRepo();
   }, [repoId]);
 
   if (!repo) return <div className="text-white p-10">Loading...</div>;

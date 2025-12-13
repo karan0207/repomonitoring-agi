@@ -56,4 +56,31 @@ router.get('/:repoId', async (req, res) => {
     }
 });
 
+// Receive results from Kestra
+router.post('/:runId/results', async (req, res) => {
+    try {
+        const { runId } = req.params;
+        const results = req.body; // Expecting JSON array of lint errors
+
+        // Store results (Simplification: just storing count for now in Run)
+        const issueCount = Array.isArray(results) ? results.length : 0;
+
+        await prisma.run.update({
+            where: { id: runId },
+            data: {
+                status: 'completed',
+                healthScoreBefore: Math.max(0, 100 - issueCount), // Simple formula
+                endedAt: new Date(),
+            }
+        });
+
+        console.log(`Run ${runId} completed with ${issueCount} issues.`);
+
+        res.json({ status: 'ok' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
