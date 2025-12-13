@@ -8,11 +8,4 @@ coverage
 .kestra
 postgres_data
 project.txt
-backend/node_modules
-dashboard/node_modules
-backend/dist
-dashboard/.next
-backend/prisma
-backend/prisma/migrations
-backend/prisma/client
 

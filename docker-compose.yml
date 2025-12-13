@@ -43,25 +43,6 @@ services:
       postgres:
         condition: service_healthy
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: devops_agi_backend
-    ports:
-      - "3001:3001"
-    environment:
-      DATABASE_URL: postgres://user:password@postgres:5432/devops_agi
-      PORT: 3001
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    networks:
-      - devops_net
-    depends_on:
-      postgres:
-        condition: service_healthy
-
 volumes:
   postgres_data:
   kestra_data:

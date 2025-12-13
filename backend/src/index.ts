@@ -7,8 +7,12 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
+import repoRoutes from './routes/repo';
+
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/repo', repoRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
