@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: devops_agi_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devops_agi
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - devops_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d devops_agi" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kestra:
+    image: kestra/kestra:latest
+    container_name: devops_agi_kestra
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./kestra_flows:/app/flows
+      - /var/run/docker.sock:/var/run/docker.sock
+      - kestra_data:/app/storage
+    environment:
+      KESTRA_CONFIGURATION: |
+        kestra:
+          repository:
+            type: memory
+          storage:
+            type: local
+            base-path: /app/storage
+    networks:
+      - devops_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devops_agi_backend
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/devops_agi
+      PORT: 3001
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - devops_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  kestra_data:
+
+
+networks:
+  devops_net:
+    driver: bridge

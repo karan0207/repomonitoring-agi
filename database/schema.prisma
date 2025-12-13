@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Repository {
+  id            String   @id @default(uuid())
+  githubRepoId  Int      @unique
+  owner         String
+  name          String
+  defaultBranch String   @default("main")
+  connectedAt   DateTime @default(now())
+  status        String   @default("active")
+  runs          Run[]
+  pullRequests  PullRequest[]
+}
+
+model Run {
+  id               String   @id @default(uuid())
+  repositoryId     String
+  repository       Repository @relation(fields: [repositoryId], references: [id])
+  triggerType      String
+  startedAt        DateTime @default(now())
+  endedAt          DateTime?
+  status           String   @default("running")
+  healthScoreBefore Int?
+  healthScoreAfter  Int?
+  pullRequests     PullRequest[]
+}
+
+model PullRequest {
+  id           String   @id @default(uuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+  runId        String
+  run          Run      @relation(fields: [runId], references: [id])
+  prNumber     Int
+  prUrl        String
+  status       String   @default("open")
+  createdAt    DateTime @default(now())
+  mergedAt     DateTime?
+  rewardScore  Float?
+  feedback     Feedback[]
+}
+
+model Feedback {
+  id            String   @id @default(uuid())
+  pullRequestId String
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+  source        String   // github, coderabbit
+  type          String   // approve, comment, reject
+  summary       String?
+  rewardValue   Float
+  createdAt     DateTime @default(now())
+}
