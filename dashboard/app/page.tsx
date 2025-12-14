@@ -40,8 +40,12 @@ export default function Home() {
 
       if (!res.ok) throw new Error("Failed to connect");
       
+      const data = await res.json();
       setStatus("success");
       setRepoUrl("");
+      
+      // Navigate to dashboard
+      window.location.href = `/dashboard/${data.id}`;
     } catch (err) {
       console.error(err);
       setStatus("error");
