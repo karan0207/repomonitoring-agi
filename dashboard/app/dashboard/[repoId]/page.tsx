@@ -18,17 +18,18 @@ export default function RepoDashboard() {
   const [repo, setRepo] = useState<Repo | null>(null);
 
   useEffect(() => {
-    // In a real app, fetch from backend using repoId
-    // For MVP demo, mocking the data or simpler fetch
-    console.log("Fetching details for", repoId);
-    // Mock data for immediate "Wow" factor
-    setRepo({
-        id: repoId as string,
-        owner: "karan0207",
-        name: "repomonitoring-agi",
-        defaultBranch: "main",
-        status: "active"
-    });
+    const fetchRepo = async () => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/repo/${repoId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setRepo(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch repo", error);
+        }
+    };
+    if (repoId) fetchRepo();
   }, [repoId]);
 
   if (!repo) return <div className="text-white p-10">Loading...</div>;
@@ -49,7 +50,17 @@ export default function RepoDashboard() {
             <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-sm">
                 Refresh Analysis
             </button>
-            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors text-sm font-medium">
+            <button 
+                onClick={async () => {
+                    await fetch('http://localhost:3001/api/runs/trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ repoId })
+                    });
+                    alert('Run triggered!');
+                }}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors text-sm font-medium"
+            >
                 Trigger Run
             </button>
         </div>

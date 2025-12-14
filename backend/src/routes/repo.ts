@@ -22,8 +22,9 @@ router.post('/connect', async (req, res) => {
                 repo: name,
             });
             githubRepo = data;
-        } catch (error) {
-            return res.status(404).json({ error: 'Repository not found on GitHub' });
+        } catch (error: any) {
+            console.error("GitHub API Error:", error.response?.data || error.message);
+            return res.status(404).json({ error: 'Repository not found on GitHub', details: error.message });
         }
 
         // Upsert into DB
@@ -57,6 +58,19 @@ router.get('/', async (req, res) => {
         orderBy: { connectedAt: 'desc' },
     });
     res.json(repos);
+});
+
+// Get single repo
+router.get('/:id', async (req, res) => {
+    try {
+        const repo = await prisma.repository.findUnique({
+            where: { id: req.params.id }
+        });
+        if (!repo) return res.status(404).json({ error: 'Repo not found' });
+        res.json(repo);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 export default router;
